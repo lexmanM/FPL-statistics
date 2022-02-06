@@ -1,2 +1,2 @@
 # FPL-statistics
-Statistical analysis of the fantasy premier league and its users
+Statistical analysis of the fantasy premier league
