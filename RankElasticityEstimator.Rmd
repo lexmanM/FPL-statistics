@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+With the FPL API downloaded dataset from the code [here](https://github.com/lexmanM/FPL-statistics/blob/main/Rank%20Elasticity%20-%2020%20sampled%20teams.ipynb), 
+
+we will try to estimate the relationship between gameweek performance (in terms of points above average) and the rank movements.
+
+```{r}
+
+# Import dataset
+data <- read.csv('20users_dataset_GW22_02052022.csv')
+
+```
+
+To start with, let's put in variables that I think are relevant for the rank change. 
+
+FYI, 
+
+'rank' is current Gameweek rank
+'previous_rank' is overall rank until end of last gameweek
+
+```{r}
+
+data_subset1 <- data[ , c("gw", "rank", "points_above_avg_percent", "rank_change", "previous_rank")]
+
+model1 <- lm(rank_change ~ ., data=data_subset1)
+summary(model1)
+
+
+```
+
+Gameweek rank and previous overall rank seem to be significantly correlated with the rank change in the current gameweek. Logically, this makes sense. But 'current rank' isn't something we can predict. 
+
+And the 'current rank' should be a linear combination of 'points_above_avg_percent'. We can test this. If this is true, we can use 'points_above_avg_percent' as a proxy for current gameweek performance. That would help us set a benchmark. 
+
+```{r}
+
+model2 <- lm(rank ~ points_above_avg_percent, data = data_subset1)
+summary(model2)
+
+```
+
+Yes, it seems fairly true with high R-squared and highly significant model and variable p-value. 
+
+```{r}
+
+model3 <- lm(rank_change ~ points_above_avg_percent + previous_rank, 
+             data=data_subset1)
+summary(model3)
+
+```
+
+```{r}
+
+new <- data.frame(points_above_avg_percent = 0.0, previous_rank = 400000)
+
+predict(model3, new, se.fit = TRUE)$fit
+
+```
+
+When the previous rank is 400k and the GW points are exactly average, the rank will drop by 185k to around 585k is the prediction. 
+
+
+------------
+
+Next Steps: 
+
+1. Validating model performance by out of sample testing. 
+2. Addressing boundary conditions. 
+3. Generate a table of predictions for different combinations of points above average and rank. 
+
+
+
+
+
+
+
